@@ -17,7 +17,9 @@ import {
   Star,
   X,
   Check,
-  ChevronDown
+  ChevronDown,
+  Utensils,
+  Download
 } from 'lucide-react';
 
 interface MenuItem {
@@ -220,23 +222,79 @@ export default function MenuPage() {
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
+  const exportToCSV = () => {
+    const headers = ['Name', 'Category', 'Price', 'Features', 'Popular', 'Available'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredItems.map((item: MenuItem) =>
+        [item.name, item.category, item.price, item.features.join('; '), item.popular, item.available].join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'services-menu.csv';
+    a.click();
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 md:p-4 space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Services Menu</h1>
-          <p className="text-gray-600 mt-1">Manage your service offerings and pricing</p>
+          <h1 className="font-bold text-gray-900 flex items-center gap-2">
+            <Utensils className="w-5 h-5 text-primary" />
+            Services Menu
+          </h1>
+          <p className="text-gray-600 text-xs mt-0.5">
+            Manage your service offerings and pricing
+          </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowAddModal(true)}
-          className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Add Service
-        </motion.button>
+        <div className="flex items-center gap-2">
+          {/* View Toggle */}
+          <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-2 py-1 rounded transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Grid3x3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-2 py-1 rounded transition-all ${
+                viewMode === 'list'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={exportToCSV}
+            className="px-3 py-1.5 text-sm bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowAddModal(true)}
+            className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-all flex items-center gap-2 shadow-md shadow-primary/20"
+          >
+            <Plus className="w-4 h-4" />
+            Add Service
+          </motion.button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -310,184 +368,275 @@ export default function MenuPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search services by name or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2.5 rounded-lg border transition-all flex items-center gap-2 ${
-                  showFilters
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
-                }`}
-              >
-                <Filter className="w-5 h-5" />
-                Filters
-                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-              </button>
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-all ${
-                    viewMode === 'grid'
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Grid3x3 className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-all ${
-                    viewMode === 'list'
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+      <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
+        <div className="flex flex-col md:flex-row gap-3">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search services by name or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
           </div>
 
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4 mt-4 border-t border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                      <select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      >
-                        <option value="all">All Categories</option>
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Services Grid/List */}
-      <div className={viewMode === 'grid'
-        ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-        : 'space-y-4'
-      }>
-        {filteredItems.map((item, index) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all ${
-              viewMode === 'list' ? 'flex gap-4' : ''
+          {/* Filter Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-2 text-sm border rounded-lg transition-all flex items-center gap-2 ${
+              showFilters
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
             }`}
           >
-            <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-              <div className="flex justify-between items-start mb-3">
+            <Filter className="w-4 h-4" />
+            Filters
+          </button>
+        </div>
+
+        {/* Filter Options */}
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 pt-3 border-t border-gray-100"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Services - Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {filteredItems.map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ scale: 1.01 }}
+              className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-base font-bold text-gray-900">{item.name}</h3>
                     {item.popular && (
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1 font-medium">
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1 font-medium border border-yellow-200">
                         <Star className="w-3 h-3" />
                         Popular
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+                  <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
                 </div>
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${
+                  item.available ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+                }`}>
+                  {item.available ? 'Available' : 'Unavailable'}
+                </span>
               </div>
 
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(item.category)}`}>
+              {/* Amount and Category */}
+              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-600">Price</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    ${item.price.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Category</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getCategoryColor(item.category)}`}>
                     {item.category}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {item.available ? 'Available' : 'Unavailable'}
-                  </span>
                 </div>
-
-                <div className="flex items-baseline gap-1">
-                  <DollarSign className="w-5 h-5 text-primary" />
-                  <span className="text-2xl font-bold text-gray-900">{item.price.toFixed(2)}</span>
-                </div>
-
-                {item.features.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 mb-2">Key Features:</p>
-                    <div className="space-y-1">
-                      {item.features.slice(0, 3).map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
-              <div className="flex gap-2">
+              {/* Features */}
+              {item.features.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 mb-2">Key Features:</p>
+                  <div className="space-y-1">
+                    {item.features.slice(0, 3).map((feature, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 text-xs text-gray-700">
+                        <Check className="w-3 h-3 text-green-600 flex-shrink-0" />
+                        <span className="line-clamp-1">{feature}</span>
+                      </div>
+                    ))}
+                    {item.features.length > 3 && (
+                      <p className="text-xs text-gray-500 mt-1">+{item.features.length - 3} more</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openViewModal(item)}
-                  className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-3 py-1.5 text-xs bg-primary text-white rounded-lg hover:bg-primary-dark transition-all flex items-center justify-center gap-1"
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-3 h-3" />
                   View
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openEditModal(item)}
-                  className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-1"
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-3 h-3" />
                   Edit
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openDeleteModal(item)}
-                  className="flex-1 px-3 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 text-red-600 rounded-lg hover:bg-red-50 transition-all flex items-center justify-center gap-1"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3 h-3" />
                   Delete
                 </motion.button>
               </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Services - List View */}
+      {viewMode === 'list' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Features
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredItems.map((item, index) => (
+                  <motion.tr
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+                          {item.popular && (
+                            <Star className="w-3 h-3 text-yellow-600 fill-yellow-600" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-1">{item.description}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(item.category)}`}>
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-semibold text-gray-900">${item.price.toFixed(2)}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${
+                        item.available ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+                      }`}>
+                        {item.available ? 'Available' : 'Unavailable'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-xs text-gray-700">
+                        {item.features.length > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <Check className="w-3 h-3 text-green-600" />
+                            <span>{item.features.length} features</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">No features</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => openViewModal(item)}
+                          className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          title="View"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => openEditModal(item)}
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => openDeleteModal(item)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {filteredItems.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
