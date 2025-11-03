@@ -6,7 +6,7 @@
  * Full CRUD operations for managing customers
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -23,6 +23,14 @@ import {
   DollarSign,
   Briefcase,
   Filter,
+  FileText,
+  Download,
+  Printer,
+  Clock,
+  ShoppingCart,
+  Receipt,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/SkeletonLoader';
 import toast from 'react-hot-toast';
@@ -40,6 +48,17 @@ interface Customer {
   projectsCompleted: number;
   notes?: string;
   createdAt: string;
+  history?: CustomerHistoryItem[];
+}
+
+interface CustomerHistoryItem {
+  id: string;
+  type: 'quotation' | 'receipt' | 'project' | 'note';
+  title: string;
+  description: string;
+  amount?: number;
+  date: string;
+  status?: 'pending' | 'completed' | 'paid' | 'cancelled';
 }
 
 export default function CustomersPage() {
@@ -50,6 +69,7 @@ export default function CustomersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -78,6 +98,44 @@ export default function CustomersPage() {
         projectsCompleted: 3,
         notes: 'VIP Client - High priority',
         createdAt: '2024-01-10',
+        history: [
+          {
+            id: 'h1',
+            type: 'quotation',
+            title: 'Website Redesign Quotation',
+            description: 'Complete website redesign with modern UI/UX',
+            amount: 8000,
+            date: '2024-03-01',
+            status: 'completed',
+          },
+          {
+            id: 'h2',
+            type: 'receipt',
+            title: 'Payment Receipt #1001',
+            description: 'Payment received for website redesign',
+            amount: 8000,
+            date: '2024-03-05',
+            status: 'paid',
+          },
+          {
+            id: 'h3',
+            type: 'project',
+            title: 'Mobile App Development',
+            description: 'iOS and Android app development',
+            amount: 5000,
+            date: '2024-02-15',
+            status: 'completed',
+          },
+          {
+            id: 'h4',
+            type: 'quotation',
+            title: 'SEO Optimization Package',
+            description: '6-month SEO optimization service',
+            amount: 2000,
+            date: '2024-03-10',
+            status: 'pending',
+          },
+        ],
       },
       {
         id: '2',
@@ -92,6 +150,35 @@ export default function CustomersPage() {
         projectsCompleted: 2,
         notes: 'Prefers email communication',
         createdAt: '2024-01-12',
+        history: [
+          {
+            id: 'h5',
+            type: 'quotation',
+            title: 'Social Media Marketing Campaign',
+            description: '3-month social media campaign',
+            amount: 4500,
+            date: '2024-02-20',
+            status: 'completed',
+          },
+          {
+            id: 'h6',
+            type: 'receipt',
+            title: 'Payment Receipt #1002',
+            description: 'Payment for marketing campaign',
+            amount: 4500,
+            date: '2024-02-25',
+            status: 'paid',
+          },
+          {
+            id: 'h7',
+            type: 'project',
+            title: 'Brand Identity Design',
+            description: 'Logo and brand guidelines',
+            amount: 4000,
+            date: '2024-01-20',
+            status: 'completed',
+          },
+        ],
       },
       {
         id: '3',
@@ -104,6 +191,26 @@ export default function CustomersPage() {
         totalSpent: 5000,
         projectsCompleted: 1,
         createdAt: '2024-01-15',
+        history: [
+          {
+            id: 'h8',
+            type: 'quotation',
+            title: 'E-commerce Website',
+            description: 'Full e-commerce solution with payment integration',
+            amount: 5000,
+            date: '2024-01-25',
+            status: 'completed',
+          },
+          {
+            id: 'h9',
+            type: 'receipt',
+            title: 'Payment Receipt #1003',
+            description: 'Full payment received',
+            amount: 5000,
+            date: '2024-02-01',
+            status: 'paid',
+          },
+        ],
       },
     ];
 
@@ -190,6 +297,18 @@ export default function CustomersPage() {
       setCustomers(customers.filter((c) => c.id !== id));
       toast.success('Customer deleted successfully!');
     }
+  };
+
+  const toggleRowExpansion = (customerId: string) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(customerId)) {
+        newSet.delete(customerId);
+      } else {
+        newSet.add(customerId);
+      }
+      return newSet;
+    });
   };
 
   if (loading) {
@@ -333,26 +452,40 @@ export default function CustomersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredCustomers.map((customer, index) => (
-                <motion.tr
-                  key={customer.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center text-white font-semibold">
-                        {customer.firstName[0]}{customer.lastName[0]}
+                <Fragment key={customer.id}>
+                  <motion.tr
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => toggleRowExpansion(customer.id)}
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <button
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRowExpansion(customer.id);
+                          }}
+                        >
+                          {expandedRows.has(customer.id) ? (
+                            <ChevronDown className="w-4 h-4 text-gray-600" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-gray-600" />
+                          )}
+                        </button>
+                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center text-white font-semibold">
+                          {customer.firstName[0]}{customer.lastName[0]}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {customer.firstName} {customer.lastName}
+                          </p>
+                          <p className="text-sm text-gray-500">{customer.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {customer.firstName} {customer.lastName}
-                        </p>
-                        <p className="text-sm text-gray-500">{customer.email}</p>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       {customer.phoneNumber && (
@@ -401,21 +534,30 @@ export default function CustomersPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => handleOpenModal('view', customer)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal('view', customer);
+                        }}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="View"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleOpenModal('edit', customer)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal('edit', customer);
+                        }}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(customer.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(customer.id);
+                        }}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete"
                       >
@@ -424,6 +566,70 @@ export default function CustomersPage() {
                     </div>
                   </td>
                 </motion.tr>
+
+                {/* Accordion Content - Customer History */}
+                <AnimatePresence>
+                  {expandedRows.has(customer.id) && customer.history && customer.history.length > 0 && (
+                    <motion.tr
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <td colSpan={6} className="px-6 py-4 bg-gray-50">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Clock className="w-4 h-4 text-primary" />
+                            <h4 className="font-semibold text-gray-900">Customer History</h4>
+                          </div>
+                          <div className="grid gap-2">
+                            {customer.history.map((item) => (
+                              <div
+                                key={item.id}
+                                className="bg-white rounded-lg p-3 border border-gray-200"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-center gap-3 flex-1">
+                                    <div className={`p-2 rounded-lg ${
+                                      item.type === 'quotation' ? 'bg-blue-100' :
+                                      item.type === 'receipt' ? 'bg-green-100' :
+                                      item.type === 'project' ? 'bg-purple-100' : 'bg-gray-100'
+                                    }`}>
+                                      {item.type === 'quotation' && <FileText className="w-4 h-4 text-blue-600" />}
+                                      {item.type === 'receipt' && <Receipt className="w-4 h-4 text-green-600" />}
+                                      {item.type === 'project' && <Briefcase className="w-4 h-4 text-purple-600" />}
+                                      {item.type === 'note' && <FileText className="w-4 h-4 text-gray-600" />}
+                                    </div>
+                                    <div className="flex-1">
+                                      <h5 className="font-semibold text-gray-900 text-sm">{item.title}</h5>
+                                      <p className="text-xs text-gray-600">{item.description}</p>
+                                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                                        <span>{new Date(item.date).toLocaleDateString()}</span>
+                                        {item.status && (
+                                          <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                            item.status === 'completed' || item.status === 'paid' ? 'bg-green-100 text-green-700' :
+                                            item.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-red-100 text-red-700'
+                                          }`}>
+                                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {item.amount && (
+                                    <span className="font-bold text-gray-900 text-sm">${item.amount.toLocaleString()}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  )}
+                </AnimatePresence>
+              </Fragment>
               ))}
             </tbody>
           </table>

@@ -22,8 +22,11 @@ import {
   Search,
   Grid3x3,
   List,
+  Printer,
+  FileText,
 } from 'lucide-react';
 import { mockCustomers, getCustomerDisplayName, getActiveCustomers, type Customer } from '@/lib/dataStore';
+import { DocumentGeneratorFactory, type ReceiptData } from '@/lib/pdfGenerator';
 import {
   PageHeader,
   SearchFilterBar,
@@ -222,6 +225,46 @@ export default function ReceiptsPage() {
   const openDeleteModal = (receipt: ReceiptItem) => {
     setSelectedReceipt(receipt);
     setShowDeleteModal(true);
+  };
+
+  const handlePrintReceipt = (receipt: ReceiptItem) => {
+    // Convert ReceiptItem to ReceiptData format
+    const receiptData: ReceiptData = {
+      receiptNumber: receipt.receiptNumber,
+      customer: {
+        name: receipt.customer,
+        email: receipt.email
+      },
+      amount: receipt.amount,
+      date: receipt.date,
+      paymentMethod: receipt.paymentMethod,
+      status: receipt.status,
+      items: receipt.items
+    };
+
+    // Use OOP approach with Factory pattern
+    const generator = DocumentGeneratorFactory.createReceiptGenerator(receiptData);
+    generator.printReceipt();
+  };
+
+  const handleDownloadReceipt = (receipt: ReceiptItem) => {
+    // Convert ReceiptItem to ReceiptData format
+    const receiptData: ReceiptData = {
+      receiptNumber: receipt.receiptNumber,
+      customer: {
+        name: receipt.customer,
+        email: receipt.email
+      },
+      amount: receipt.amount,
+      date: receipt.date,
+      paymentMethod: receipt.paymentMethod,
+      status: receipt.status,
+      items: receipt.items
+    };
+
+    // Use OOP approach with Factory pattern
+    const generator = DocumentGeneratorFactory.createReceiptGenerator(receiptData);
+    generator.downloadReceipt();
   };
 
   const filteredReceipts = receipts.filter(receipt => {
@@ -982,9 +1025,26 @@ export default function ReceiptsPage() {
                 </div>
               </div>
 
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => handlePrintReceipt(selectedReceipt)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print
+                </button>
+                <button
+                  onClick={() => handleDownloadReceipt(selectedReceipt)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+
               <button
                 onClick={() => setShowViewModal(false)}
-                className="w-full mt-6 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                className="w-full mt-3 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 Close
               </button>

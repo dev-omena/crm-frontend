@@ -29,9 +29,11 @@ import {
   X,
   Package,
   Search,
+  Printer,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { mockMenuItems, mockCustomers, getCustomerDisplayName, getActiveCustomers, type MenuItem, type Customer } from '@/lib/dataStore';
+import { DocumentGeneratorFactory, type QuotationData } from '@/lib/pdfGenerator';
 import { PageHeader, SearchFilterBar, GridCard, DataTable, EmptyState, FormModal, FormField, ViewField } from '@/components/dashboard';
 
 interface QuotationItem {
@@ -303,6 +305,46 @@ export default function QuotationsPage() {
       items: quotation.items.toString(),
     });
     setShowEditModal(true);
+  };
+
+  const handlePrintQuotation = (quotation: QuotationItem) => {
+    // Convert QuotationItem to QuotationData format
+    const quotationData: QuotationData = {
+      quotationNumber: quotation.quotationNumber,
+      customer: {
+        name: quotation.customer.name,
+        email: quotation.customer.email,
+      },
+      amount: quotation.amount,
+      createdDate: quotation.createdDate,
+      validUntil: quotation.validUntil,
+      status: quotation.status,
+      items: quotation.items,
+    };
+
+    // Use OOP approach with Factory pattern
+    const generator = DocumentGeneratorFactory.createQuotationGenerator(quotationData);
+    generator.printQuotation();
+  };
+
+  const handleDownloadQuotation = (quotation: QuotationItem) => {
+    // Convert QuotationItem to QuotationData format
+    const quotationData: QuotationData = {
+      quotationNumber: quotation.quotationNumber,
+      customer: {
+        name: quotation.customer.name,
+        email: quotation.customer.email,
+      },
+      amount: quotation.amount,
+      createdDate: quotation.createdDate,
+      validUntil: quotation.validUntil,
+      status: quotation.status,
+      items: quotation.items,
+    };
+
+    // Use OOP approach with Factory pattern
+    const generator = DocumentGeneratorFactory.createQuotationGenerator(quotationData);
+    generator.downloadQuotation();
   };
 
   const handleEditSave = () => {
@@ -712,22 +754,36 @@ export default function QuotationsPage() {
         icon={Eye}
         maxWidth="2xl"
         footer={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowViewModal(false)}
-              className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+              className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
             >
               Close
+            </button>
+            <button
+              onClick={() => selectedQuotation && handlePrintQuotation(selectedQuotation)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Print
+            </button>
+            <button
+              onClick={() => selectedQuotation && handleDownloadQuotation(selectedQuotation)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download
             </button>
             <button
               onClick={() => {
                 setShowViewModal(false);
                 if (selectedQuotation) openEditModal(selectedQuotation);
               }}
-              className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all flex items-center gap-2"
             >
               <Edit className="w-4 h-4" />
-              Edit Quotation
+              Edit
             </button>
           </div>
         }
