@@ -34,6 +34,7 @@ import {
   FileText,
   Utensils,
   Wallet,
+  ActivitySquare,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useState } from 'react';
@@ -128,6 +129,11 @@ const navSections: NavSection[] = [
         name: 'Tools',
         path: '/dashboard/tools',
         icon: <Wrench className="w-5 h-5" />,
+      },
+      {
+        name: 'Activity Logs',
+        path: '/dashboard/activity-logs',
+        icon: <ActivitySquare className="w-5 h-5" />,
       },
     ],
   },

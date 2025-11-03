@@ -15,6 +15,9 @@ import {
 } from 'firebase/storage';
 import { storage } from './firebase';
 
+// Re-export storage for convenience
+export { storage };
+
 export interface UploadProgress {
   progress: number;
   snapshot: UploadTaskSnapshot;

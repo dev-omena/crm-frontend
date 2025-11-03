@@ -4,14 +4,10 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
-  Search,
-  Filter,
-  Grid3x3,
-  List,
   Eye,
   Edit2,
   Trash2,
-  Receipt,
+  Receipt as ReceiptIcon,
   DollarSign,
   TrendingUp,
   Clock,
@@ -21,9 +17,23 @@ import {
   User,
   Calendar,
   CreditCard,
-  ChevronDown
+  ChevronDown,
+  Package,
+  Search,
+  Grid3x3,
+  List,
 } from 'lucide-react';
 import { mockCustomers, getCustomerDisplayName, getActiveCustomers, type Customer } from '@/lib/dataStore';
+import {
+  PageHeader,
+  SearchFilterBar,
+  GridCard,
+  DataTable,
+  EmptyState,
+  FormModal,
+  FormField,
+  ViewField,
+} from '@/components/dashboard';
 
 interface ReceiptItem {
   id: string;
@@ -275,7 +285,7 @@ export default function ReceiptsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="font-bold text-gray-900 flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-primary" />
+            <ReceiptIcon className="w-5 h-5 text-primary" />
             Receipts
           </h1>
           <p className="text-gray-600 text-xs mt-0.5">
@@ -391,284 +401,155 @@ export default function ReceiptsPage() {
               <p className="text-2xl font-bold text-purple-900">${stats.avgAmount.toFixed(2)}</p>
             </div>
             <div className="p-3 bg-purple-200 rounded-lg">
-              <Receipt className="w-6 h-6 text-purple-700" />
+              <ReceiptIcon className="w-6 h-6 text-purple-700" />
             </div>
           </div>
         </motion.div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-3">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by receipt number, customer, or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            />
-          </div>
-
-          {/* Filter Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 text-sm border rounded-lg transition-all flex items-center gap-2 ${
-              showFilters
-                ? 'bg-primary text-white border-primary'
-                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            Filters
-          </button>
-        </div>
-
-        {/* Filter Options */}
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-3 pt-3 border-t border-gray-100"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="all">All Status</option>
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
-                  <option value="refunded">Refunded</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                <select
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="all">All Payment Methods</option>
-                  {paymentMethods.map(method => (
-                    <option key={method} value={method}>{method}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </div>
+      <SearchFilterBar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by receipt number, customer, or email..."
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters(!showFilters)}
+        filterOptions={[
+          {
+            label: 'Status',
+            value: statusFilter,
+            options: [
+              { label: 'All Status', value: 'all' },
+              { label: 'Paid', value: 'paid' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'Refunded', value: 'refunded' },
+            ],
+            onChange: setStatusFilter,
+            type: 'select',
+          },
+          {
+            label: 'Payment Method',
+            value: paymentFilter,
+            options: [
+              { label: 'All Payment Methods', value: 'all' },
+              ...paymentMethods.map(method => ({ label: method, value: method })),
+            ],
+            onChange: setPaymentFilter,
+            type: 'select',
+          },
+        ]}
+        activeFilters={{ Status: statusFilter, 'Payment Method': paymentFilter }}
+      />
 
       {/* Receipts - Grid View */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredReceipts.map((receipt, index) => (
-            <motion.div
+            <GridCard
               key={receipt.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.01 }}
-              className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-base font-bold text-gray-900 mb-1">
-                    {receipt.receiptNumber}
-                  </h3>
-                  <p className="text-sm font-medium text-gray-700">{receipt.customer}</p>
-                  <p className="text-xs text-gray-500">{receipt.email}</p>
-                </div>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(receipt.status)}`}>
-                  {receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1)}
-                </span>
-              </div>
-
-              {/* Amount */}
-              <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Receipt Amount</span>
-                  <span className="text-lg font-bold text-gray-900">
-                    ${receipt.amount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-gray-500">{receipt.items} items</span>
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Date</p>
-                  <div className="flex items-center gap-1 text-xs text-gray-700">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(receipt.date).toLocaleDateString()}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Payment Method</p>
-                  <div className="flex items-center gap-1 text-xs text-gray-700">
-                    <CreditCard className="w-3 h-3" />
-                    {receipt.paymentMethod}
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => openViewModal(receipt)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-primary text-white rounded-lg hover:bg-primary-dark transition-all flex items-center justify-center gap-1"
-                >
-                  <Eye className="w-3 h-3" />
-                  View
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => openEditModal(receipt)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-1"
-                >
-                  <Edit2 className="w-3 h-3" />
-                  Edit
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => openDeleteModal(receipt)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 text-red-600 rounded-lg hover:bg-red-50 transition-all flex items-center justify-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Delete
-                </motion.button>
-              </div>
-            </motion.div>
+              title={receipt.receiptNumber}
+              subtitle={receipt.customer}
+              description={receipt.email}
+              badge={{
+                text: receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1),
+                className: getStatusColor(receipt.status),
+              }}
+              amount={{
+                label: 'Receipt Amount',
+                value: `$${receipt.amount.toLocaleString()}`,
+                subtext: `${receipt.items} items`,
+              }}
+              details={[
+                {
+                  label: 'Date',
+                  value: new Date(receipt.date).toLocaleDateString(),
+                  icon: Calendar,
+                },
+                {
+                  label: 'Payment Method',
+                  value: receipt.paymentMethod,
+                  icon: CreditCard,
+                },
+              ]}
+              onView={() => openViewModal(receipt)}
+              onEdit={() => openEditModal(receipt)}
+              onDelete={() => openDeleteModal(receipt)}
+              index={index}
+            />
           ))}
         </div>
       )}
 
       {/* Receipts - List View */}
       {viewMode === 'list' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Receipt
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredReceipts.map((receipt, index) => (
-                  <motion.tr
-                    key={receipt.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{receipt.receiptNumber}</p>
-                        <p className="text-xs text-gray-500">{receipt.items} items</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{receipt.customer}</p>
-                        <p className="text-xs text-gray-500">{receipt.email}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-semibold text-gray-900">${receipt.amount.toLocaleString()}</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <CreditCard className="w-3 h-3" />
-                        {receipt.paymentMethod}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(receipt.status)}`}>
-                        {receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 text-xs text-gray-700">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(receipt.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => openViewModal(receipt)}
-                          className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-all"
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => openEditModal(receipt)}
-                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => openDeleteModal(receipt)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </motion.button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable
+          columns={[
+            {
+              header: 'Receipt',
+              accessor: 'receiptNumber',
+              render: (value: string, row: ReceiptItem) => (
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{value}</p>
+                  <p className="text-xs text-gray-500">{row.items} items</p>
+                </div>
+              ),
+            },
+            {
+              header: 'Customer',
+              accessor: 'customer',
+              render: (value: string, row: ReceiptItem) => (
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{value}</p>
+                  <p className="text-xs text-gray-500">{row.email}</p>
+                </div>
+              ),
+            },
+            {
+              header: 'Amount',
+              accessor: 'amount',
+              render: (value: number, row: ReceiptItem) => (
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">${value.toLocaleString()}</p>
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <CreditCard className="w-3 h-3" />
+                    {row.paymentMethod}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              header: 'Status',
+              accessor: 'status',
+              render: (value: string) => (
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(value)}`}>
+                  {value.charAt(0).toUpperCase() + value.slice(1)}
+                </span>
+              ),
+            },
+            {
+              header: 'Date',
+              accessor: 'date',
+              render: (value: string) => (
+                <div className="flex items-center gap-1 text-xs text-gray-700">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(value).toLocaleDateString()}
+                </div>
+              ),
+            },
+          ]}
+          data={filteredReceipts}
+          onView={openViewModal}
+          onEdit={openEditModal}
+          onDelete={openDeleteModal}
+        />
       )}
 
       {filteredReceipts.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-          <Receipt className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">No receipts found</p>
-          <p className="text-gray-500 text-sm mt-1">Try adjusting your search or filters</p>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="No receipts found"
+          description="Try adjusting your search or filters"
+        />
       )}
 
       {/* Add Modal */}
